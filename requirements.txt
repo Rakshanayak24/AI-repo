@@ -1,0 +1,3 @@
+streamlit>=1.37,<2
+pymupdf>=1.24,<2
+reportlab>=4,<5
