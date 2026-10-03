@@ -23,6 +23,7 @@ h1,h2,h3{font-family:'Manrope',sans-serif;letter-spacing:-.035em;color:var(--tex
 .hero{font:700 42px/1.12 'Manrope',sans-serif;letter-spacing:-.055em;margin:10px 0 12px;color:#f0f6fc}
 .sub{color:#91a0b0;font-size:15px;line-height:1.65;max-width:660px}
 .panel{background:linear-gradient(145deg,#111c29e8,#0e1621e8);border:1px solid var(--line);border-radius:16px;padding:21px 23px;margin-bottom:14px;box-shadow:0 12px 40px #00000017}
+[data-testid="stVerticalBlockBorderWrapper"]{background:linear-gradient(145deg,#111c29e8,#0e1621e8);border:1px solid var(--line);border-radius:16px;padding:4px 16px;box-shadow:0 12px 40px #00000017;margin-bottom:14px}
 .panel-title{font:600 12px 'DM Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:#a9b9c9;margin-bottom:15px}
 .metric-label{color:#8291a2;font:500 10px 'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase}
 .metric-value{color:#ecf3fa;font:600 19px 'Manrope',sans-serif;margin-top:6px}
@@ -55,44 +56,41 @@ for col, (label, value, note) in zip(columns, metrics):
 
 left, right = st.columns([1.08, .92], gap="large")
 with left:
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    panel_title("01 / Define the outcome")
-    goal = st.text_area("Task", value="Process the latest invoice from Northstar Components: extract the amount and due date, enter it in accounts payable, then confirm when it is done.", height=112, label_visibility="collapsed")
-    a, b = st.columns([1, 1])
-    with a:
-        inject_failure = st.toggle("Simulate one connector timeout", value=True, help="Demonstrates bounded retry and recovery.")
-    with b:
-        approve = st.toggle("Approve high-value invoice", value=False, help="Invoices at or above ₹100,000 require explicit approval.")
-    run = st.button("Run operator  →", type="primary", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        panel_title("01 / Define the outcome")
+        goal = st.text_area("Task", value="Process the latest invoice from Northstar Components: extract the amount and due date, enter it in accounts payable, then confirm when it is done.", height=112, label_visibility="collapsed")
+        a, b = st.columns([1, 1])
+        with a:
+            inject_failure = st.toggle("Simulate one connector timeout", value=True, help="Demonstrates bounded retry and recovery.")
+        with b:
+            approve = st.toggle("Approve high-value invoice", value=False, help="Invoices at or above ₹100,000 require explicit approval.")
+        run = st.button("Run operator  →", type="primary", use_container_width=True)
 
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    panel_title("02 / Company context")
-    st.markdown('<div style="font-size:13px;color:#bfccd8;line-height:1.8">▸ Inbox: <code>data/inbox/</code><br>▸ System of record: local AP ledger<br>▸ Policy: invoices ≥ ₹100,000 need human approval<br>▸ Duplicate key: invoice number<br>▸ Retry budget: one retry for transient failures</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        panel_title("02 / Company context")
+        st.markdown('<div style="font-size:13px;color:#bfccd8;line-height:1.8">▸ Inbox: <code>data/inbox/</code><br>▸ System of record: local AP ledger<br>▸ Policy: invoices ≥ ₹100,000 need human approval<br>▸ Duplicate key: invoice number<br>▸ Retry budget: one retry for transient failures</div>', unsafe_allow_html=True)
 
 with right:
-    st.markdown('<div class="panel" style="min-height:250px">', unsafe_allow_html=True)
-    panel_title("03 / Execution trace")
-    if run:
-        result = run_task(goal, fail_once=inject_failure, approve=approve)
-        st.session_state["last_run"] = result
-    result = st.session_state.get("last_run")
-    if result:
-        if result["status"] == "complete": st.markdown('<span class="pill">● VERIFIED COMPLETE</span>', unsafe_allow_html=True)
-        elif result["status"] == "needs_approval": st.markdown('<span class="pill" style="border-color:#685132;background:#2a2114;color:#f1bd72">◉ AWAITING APPROVAL</span>', unsafe_allow_html=True)
-        else: st.markdown('<span class="pill" style="border-color:#6c343a;background:#2c171b;color:#ff9d9d">● NEEDS ATTENTION</span>', unsafe_allow_html=True)
-        st.write("")
-        for event in result["events"]:
-            color = "#f1bd72" if event.status in ("warning", "approval") else "#ff9090" if event.status == "error" else "#78dcb9"
-            safe_time, safe_stage = html.escape(event.timestamp), html.escape(event.stage.upper())
-            safe_message, safe_detail = html.escape(event.message), html.escape(event.detail)
-            st.markdown(f'<div class="event"><div class="event-time">{safe_time}</div><div><div class="event-stage" style="color:{color}">{safe_stage}</div><div class="event-message">{safe_message}</div><div class="event-detail">{safe_detail}</div></div></div>', unsafe_allow_html=True)
-        safe_summary = html.escape(result["summary"])
-        st.markdown(f'<div style="margin-top:16px;padding:13px 15px;border-radius:10px;background:#0b131d;border:1px solid #202e3b;color:#c8d6e2;font-size:13px;line-height:1.6">{safe_summary}</div>', unsafe_allow_html=True)
-    else:
-        st.markdown('<div style="color:#8594a5;font-size:13px;line-height:1.8;padding:18px 0">The worker will expose every decision and tool result here. Run the sample task to inspect the full goal → plan → execute → verify loop.</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        panel_title("03 / Execution trace")
+        if run:
+            result = run_task(goal, fail_once=inject_failure, approve=approve)
+            st.session_state["last_run"] = result
+        result = st.session_state.get("last_run")
+        if result:
+            if result["status"] == "complete": st.markdown('<span class="pill">● VERIFIED COMPLETE</span>', unsafe_allow_html=True)
+            elif result["status"] == "needs_approval": st.markdown('<span class="pill" style="border-color:#685132;background:#2a2114;color:#f1bd72">◉ AWAITING APPROVAL</span>', unsafe_allow_html=True)
+            else: st.markdown('<span class="pill" style="border-color:#6c343a;background:#2c171b;color:#ff9d9d">● NEEDS ATTENTION</span>', unsafe_allow_html=True)
+            st.write("")
+            for event in result["events"]:
+                color = "#f1bd72" if event.status in ("warning", "approval") else "#ff9090" if event.status == "error" else "#78dcb9"
+                safe_time, safe_stage = html.escape(event.timestamp), html.escape(event.stage.upper())
+                safe_message, safe_detail = html.escape(event.message), html.escape(event.detail)
+                st.markdown(f'<div class="event"><div class="event-time">{safe_time}</div><div><div class="event-stage" style="color:{color}">{safe_stage}</div><div class="event-message">{safe_message}</div><div class="event-detail">{safe_detail}</div></div></div>', unsafe_allow_html=True)
+            safe_summary = html.escape(result["summary"])
+            st.markdown(f'<div style="margin-top:16px;padding:13px 15px;border-radius:10px;background:#0b131d;border:1px solid #202e3b;color:#c8d6e2;font-size:13px;line-height:1.6">{safe_summary}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div style="color:#8594a5;font-size:13px;line-height:1.8;padding:18px 0">The worker will expose every decision and tool result here. Run the sample task to inspect the full goal → plan → execute → verify loop.</div>', unsafe_allow_html=True)
 
 with st.expander("Inspect the local accounts payable ledger"):
     ledger = InvoiceTools().read_ledger()

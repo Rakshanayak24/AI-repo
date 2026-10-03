@@ -90,11 +90,21 @@ class InvoiceTools:
 
 
 def _candidate_from_goal(goal: str, files: list[Path]) -> Path:
-    normalized_goal = re.sub(r"[^a-z0-9]+", " ", goal.casefold()).strip()
-    matches = [p for p in files if re.sub(r"[^a-z0-9]+", " ", p.stem.casefold()).strip() in normalized_goal]
-    candidates = matches or files
-    # "latest" and unspecified both resolve to newest matching invoice.
-    return candidates[0]
+    goal_tokens = set(re.findall(r"[a-z]+", goal.casefold()))
+    # A named vendor after "from" / "vendor" takes precedence over incidental
+    # words elsewhere in the request (for example, "office" in "accounts payable").
+    hint = re.search(r"\b(?:from|vendor)\s+(.+?)(?:[,.;:]|\b(?:invoice|extract|enter|process|then|and|to)\b|$)", goal, re.I)
+    hint_tokens = set(re.findall(r"[a-z]+", hint.group(1).casefold())) if hint else set()
+    scored = []
+    for path in files:
+        # Ignore date/version chunks in filenames; match the vendor words themselves.
+        vendor_tokens = {token for token in re.findall(r"[a-z]+", path.stem.casefold()) if len(token) > 2}
+        score = len(vendor_tokens & (hint_tokens or goal_tokens))
+        scored.append((score, path))
+    best_score = max((score for score, _ in scored), default=0)
+    candidates = [path for score, path in scored if score == best_score] if best_score else files
+    # "latest" and unspecified resolve to the newest matching invoice.
+    return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
 def run_task(goal: str, *, fail_once: bool = False, approve: bool = False) -> dict[str, Any]:
